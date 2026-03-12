@@ -6,7 +6,7 @@ on:
       - feature/**    # Se dispara en cualquier rama que empiece con feature/
 
 env:
-  TF_VERSION: " 1.13.5"
+  TF_VERSION: "1.13.5"
   WORKING_DIR: "."
   AWS_REGION: "us-east-1"
 
