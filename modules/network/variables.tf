@@ -1,3 +1,13 @@
+variable "region" {
+  description = "AWS region to deploy resources"
+  type        = string
+}
+
+variable "availability_zone_a" {
+  description = "Availability zone for the first subnet"
+  type        = string
+}
+
 variable "vpc_cidr" {
     description = "CIDR block for the VPC"
     type = string
@@ -18,7 +28,28 @@ variable "subnet-private-name" {
   type = string     
 }
 
-variable "region" {
-  description = "AWS region"
+variable "route_table_private_name" {
+  description = "Name of the route table for the private subnet"
+  type = string     
+}
+
+
+variable "aws_s3_ingress_bucket_name" {
+  description = "nombre del bucket principal"
   type = string
 }
+
+
+variable "aws_s3_quarantine_bucket_name" {
+  description = "nombre del bucket de cuarentena"
+  type = string
+}
+
+
+
+variable "aws_s3_clean_bucket_name" {
+  description = "nombre del bucket que contendra los archivos sin información sensible"
+  type = string
+}
+
+

@@ -1,0 +1,69 @@
+name: CI Feature - Auto PR
+
+on:
+  push:
+    branches:
+      - feature/**    # Se dispara en cualquier rama que empiece con feature/
+
+env:
+  TF_VERSION: " 1.13.5"
+  WORKING_DIR: "."
+  AWS_REGION: "us-east-1"
+
+jobs:
+  terraform-plan-and-pr:
+    name: Plan & Create PR
+    runs-on: ubuntu-latest
+    # Permiso necesario para crear PRs desde el workflow
+    permissions:
+      contents: read
+      pull-requests: write
+
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      # Corre el plan y guarda el output en una variable de entorno
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -no-color 2>&1 | tee plan_output.txt
+          echo "PLAN_OUTPUT<<EOF" >> $GITHUB_ENV
+          cat plan_output.txt >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      # Crea el PR automáticamente con el output del plan como body
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: dev                                       # PR apunta hacia dev
+          branch: ${{ github.ref_name }}                 # rama origen (feature/xxx)
+          title: "feat: ${{ github.ref_name }}"
+          body: |
+            ## 🚀 PR automático desde `${{ github.ref_name }}`
+
+            ### Terraform Plan
+            ```hcl
+            ${{ env.PLAN_OUTPUT }}
+            ```
+          draft: false

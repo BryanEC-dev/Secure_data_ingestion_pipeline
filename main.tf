@@ -40,19 +40,40 @@ provider "aws" {
 module "network" {
 
 source = "./modules/network"
+region = var.region
+availability_zone_a = var.availability_zone_a
+
 network_name        = var.network_name
 vpc_cidr            = var.vpc_cidr
 subnet_private_cidr = var.subnet_private_cidr
 subnet-private-name = var.subnet-private-name
-region = var.region
+route_table_private_name = var.route_table_private_name
+
+aws_s3_ingress_bucket_name   = var.aws_s3_ingress_bucket_name
+aws_s3_clean_bucket_name     = var.aws_s3_clean_bucket_name
+aws_s3_quarantine_bucket_name = var.aws_s3_quarantine_bucket_name
 
 }
 
-module "s3_buckets" {
-  source = "./modules/storage"
 
+module "storage" {
+  source = "./modules/storage"
+  vpc_id                       = module.network.vpc_id_final
   aws_s3_ingress_bucket_name   = var.aws_s3_ingress_bucket_name
-  aws_s3_quarintine_bucket_name = var.aws_s3_quarintine_bucket_name
+  aws_s3_quarantine_bucket_name = var.aws_s3_quarantine_bucket_name
   aws_s3_clean_bucket_name     = var.aws_s3_clean_bucket_name
   region                       = var.region
+  
+  terraform_user_arn = var.terraform_user_arn
+
 } 
+
+
+module "sqs_queue" {
+  source = "./modules/messaging"
+
+  sqs_queue_name = var.sqs_queue_name
+  ingress_bucket_arn = module.storage.ingress_bucket_arn
+  ingress_bucket_id  = module.storage.ingress_bucket_id
+
+}

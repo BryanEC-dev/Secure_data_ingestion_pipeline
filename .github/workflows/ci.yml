@@ -1,0 +1,38 @@
+name: CI -develop
+run-name : CI Pipeline
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: 
+        - develop
+
+env:
+    TF_VERSION: 1.5.0
+    WORKING_DIR: ${{ github.workspace }}/terraform
+    AWS_REGION: us-east-1
+
+
+jobs:
+  terraform:
+    name: Terraform Plan
+    runs-on: ubuntu-latest # Use the latest Ubuntu runner
+    
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+        # Init descarga providers y conecta con el remote backend en S3
+      - name: Terraform Init
+        run: terraform init
+ 
+      # Plan solo para PRs, no aplica cambios, solo muestra lo que se haría
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+        if: github.event_name == 'pull_request'
+ 
+      # Apply solo cuando el PR fue mergeado a dev
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
